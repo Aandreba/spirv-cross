@@ -1,6 +1,5 @@
 use crate::{
     error::{Error, Result},
-    parsed_ir::OwnedParsedIr,
     sys,
 };
 use docfg::docfg;
@@ -25,11 +24,6 @@ impl Context {
                 other => Err(other.into()),
             };
         }
-    }
-
-    #[inline]
-    pub fn parse_spirv<'a>(&'a mut self, words: &[u32]) -> Result<OwnedParsedIr<'a>> {
-        OwnedParsedIr::new(self, words)
     }
 
     #[docfg(feature = "nightly")]

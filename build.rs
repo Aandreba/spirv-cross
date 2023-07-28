@@ -4,14 +4,6 @@ use std::{env, path::Path};
 fn main() {
     let out_path = env::var_os("OUT_DIR").unwrap();
 
-    // Prevent building SPIRV-Cross on wasm32 target
-    let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH");
-    if let Ok(arch) = target_arch {
-        if "wasm32" == arch {
-            return;
-        }
-    }
-
     let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR");
     let is_apple = target_vendor.is_ok() && target_vendor.unwrap() == "apple";
 

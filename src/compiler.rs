@@ -1,7 +1,6 @@
 use crate::error::Result;
 use crate::sys;
 use crate::Context;
-use crate::ParsedIr;
 use std::ffi::c_uint;
 use std::ffi::CStr;
 use std::mem::MaybeUninit;
@@ -10,6 +9,14 @@ pub mod glsl;
 
 pub trait Compiler<'a> {
     fn raw_compile(self) -> Result<&'a CStr>;
+
+    fn compile(self) -> Result<String>
+    where
+        Self: Sized,
+    {
+        let src = self.raw_compile()?;
+        return Ok(src.to_string_lossy().into_owned());
+    }
 }
 
 pub struct GenericCompiler<'a> {
@@ -19,25 +26,27 @@ pub struct GenericCompiler<'a> {
 }
 
 impl<'a> GenericCompiler<'a> {
-    pub fn new_parsed<'b>(
-        ctx: &'a mut Context,
-        backend: sys::spvc_backend,
-        parsed_ir: impl Into<ParsedIr<'a, 'b>>,
-    ) -> Result<Self>
+    pub fn new<'b>(ctx: &'a mut Context, backend: sys::spvc_backend, words: &[u32]) -> Result<Self>
     where
         'a: 'b,
     {
-        let parsed_ir: ParsedIr<'a, 'b> = parsed_ir.into();
-
+        let mut parsed_ir = MaybeUninit::uninit();
         let mut compiler = MaybeUninit::uninit();
         let mut options = MaybeUninit::uninit();
 
         unsafe {
+            ctx.get_error(sys::spvc_context_parse_spirv(
+                ctx.inner,
+                words.as_ptr(),
+                words.len(),
+                parsed_ir.as_mut_ptr(),
+            ));
+
             ctx.get_error(sys::spvc_context_create_compiler(
                 ctx.inner,
                 backend,
-                parsed_ir.inner,
-                parsed_ir.mode(),
+                parsed_ir.assume_init(),
+                sys::spvc_capture_mode::SPVC_CAPTURE_MODE_TAKE_OWNERSHIP,
                 compiler.as_mut_ptr(),
             ))?;
 
@@ -54,11 +63,7 @@ impl<'a> GenericCompiler<'a> {
         }
     }
 
-    pub fn set_uint(
-        &mut self,
-        option: sys::spvc_compiler_option,
-        value: c_uint,
-    ) -> Result<&mut Self> {
+    pub fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self> {
         unsafe {
             self.ctx.get_error(sys::spvc_compiler_options_set_uint(
                 self.options,
@@ -69,11 +74,7 @@ impl<'a> GenericCompiler<'a> {
         return Ok(self);
     }
 
-    pub fn set_bool(
-        &mut self,
-        option: sys::spvc_compiler_option,
-        value: bool,
-    ) -> Result<&mut Self> {
+    pub fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self> {
         unsafe {
             self.ctx.get_error(sys::spvc_compiler_options_set_bool(
                 self.options,

@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use semver::Version;
+use std::borrow::Cow;
 
 macro_rules! flat_mod {
     ($($i:ident),+) => {
@@ -13,7 +12,8 @@ macro_rules! flat_mod {
 
 pub mod compiler;
 pub mod error;
-pub mod parsed_ir;
+
+/// Raw bindings to the C
 #[path = "bindings.rs"]
 pub mod sys;
 
@@ -23,8 +23,6 @@ flat_mod! {
 
 #[doc(inline)]
 pub use error::Error;
-#[doc(inline)]
-pub use parsed_ir::ParsedIr;
 
 pub const SPVC_VERSION: Version = Version::new(
     sys::SPVC_C_API_VERSION_MAJOR as u64,
