@@ -24,6 +24,7 @@ fn main() {
 
     build
         .file("SPIRV-Cross/spirv_cfg.cpp")
+        .file("SPIRV-Cross/spirv_cross.cpp")
         .file("SPIRV-Cross/spirv_cross_c.cpp")
         .file("SPIRV-Cross/spirv_cross_parsed_ir.cpp")
         .file("SPIRV-Cross/spirv_parser.cpp")
@@ -31,21 +32,22 @@ fn main() {
 
     // Ideally the GLSL compiler would be omitted here, but the HLSL and MSL compiler
     // currently inherit from it. So it's necessary to unconditionally include it here.
+    #[cfg(feature = "glsl")]
     build
         .file("SPIRV-Cross/spirv_glsl.cpp")
-        .flag("-DSPIRV_CROSS_WRAPPER_GLSL");
+        .define("SPIRV_CROSS_C_API_GLSL", None);
 
     #[cfg(feature = "hlsl")]
     build
         .file("SPIRV-Cross/spirv_hlsl.cpp")
-        .flag("-DSPIRV_CROSS_WRAPPER_HLSL");
+        .define("SPIRV_CROSS_C_API_HLSL", None);
 
     #[cfg(feature = "msl")]
     build
         .file("SPIRV-Cross/spirv_msl.cpp")
-        .flag("-DSPIRV_CROSS_WRAPPER_MSL");
+        .define("SPIRV_CROSS_C_API_MSL", None);
 
-    build.compile("spirv-cross");
+    build.compile("spirv-cross-rust-wrapper");
     generate_bindings(out_path.as_ref());
 }
 

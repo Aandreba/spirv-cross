@@ -5,7 +5,11 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
+default = ["glsl"]
 nightly = []
+glsl = []
+hlsl = ["glsl"]
+msl = ["glsl"]
 
 [build-dependencies]
 bindgen = "0.66.1"

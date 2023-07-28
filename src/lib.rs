@@ -1,3 +1,6 @@
+#![cfg_attr(feature = "nightly", feature(thin_box))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 use semver::Version;
 use std::borrow::Cow;
 

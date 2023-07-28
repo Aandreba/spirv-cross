@@ -3,12 +3,12 @@ use crate::{
     sys,
 };
 use docfg::docfg;
-use std::{ffi::CStr, mem::MaybeUninit};
+use std::{backtrace::Backtrace, ffi::CStr, mem::MaybeUninit};
 
 pub struct Context {
     pub inner: sys::spvc_context,
     #[cfg(feature = "nightly")]
-    error_callback: Option<ThinBox<dyn FnMut(&CStr)>>,
+    error_callback: Option<std::boxed::ThinBox<dyn FnMut(&CStr)>>,
 }
 
 impl Context {
@@ -27,15 +27,17 @@ impl Context {
     }
 
     #[docfg(feature = "nightly")]
-    pub fn set_error_callback<F: FnMut(&CStr)>(&mut self, f: F) {
+    pub fn set_error_callback<F: 'static + FnMut(&CStr)>(&mut self, f: F) {
         use std::boxed::ThinBox;
 
         unsafe extern "C" fn error_callback_wrapper(
             user_data: *mut std::ffi::c_void,
             error: *const std::ffi::c_char,
         ) {
-            let mut f =
-                ManuallyDrop::new(core::mem::transmute::<_, ThinBox<dyn FnMut(&CStr)>>(src));
+            let mut f = core::mem::ManuallyDrop::new(core::mem::transmute::<
+                _,
+                ThinBox<dyn FnMut(&CStr)>,
+            >(user_data));
             (f)(CStr::from_ptr(error));
         }
 
@@ -51,7 +53,7 @@ impl Context {
     }
 
     #[inline]
-    pub unsafe fn release_allocations(&mut self) {
+    pub fn release_allocations(&mut self) {
         unsafe { sys::spvc_context_release_allocations(self.inner) }
     }
 
@@ -59,6 +61,9 @@ impl Context {
         if code == sys::spvc_result::SPVC_SUCCESS {
             return Ok(());
         }
+
+        #[cfg(debug_assertions)]
+        println!("{}", Backtrace::capture());
 
         unsafe {
             let err_msg = CStr::from_ptr(sys::spvc_context_get_last_error_string(self.inner))

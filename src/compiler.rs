@@ -40,7 +40,7 @@ impl<'a> GenericCompiler<'a> {
                 words.as_ptr(),
                 words.len(),
                 parsed_ir.as_mut_ptr(),
-            ));
+            ))?;
 
             ctx.get_error(sys::spvc_context_create_compiler(
                 ctx.inner,
@@ -90,6 +90,12 @@ impl<'a> Compiler<'a> for GenericCompiler<'a> {
     fn raw_compile(self) -> Result<&'a CStr> {
         let mut source = MaybeUninit::uninit();
         unsafe {
+            self.ctx
+                .get_error(sys::spvc_compiler_install_compiler_options(
+                    self.compiler,
+                    self.options,
+                ))?;
+
             self.ctx.get_error(sys::spvc_compiler_compile(
                 self.compiler,
                 source.as_mut_ptr(),

@@ -1,20 +1,23 @@
 use super::{Compiler, GenericCompiler};
 use crate::error::Result;
 use crate::sys::{self, spvc_compiler_option};
-use crate::{Context, ParsedIr};
+use crate::Context;
+use docfg::docfg;
 use semver::Version;
 
+#[docfg(feature = "glsl")]
 pub struct GlslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }
 
+#[docfg(feature = "glsl")]
 impl<'a> GlslCompiler<'a> {
-    pub fn new<'b>(ctx: &'a mut Context, parsed_ir: impl Into<ParsedIr<'a, 'b>>) -> Result<Self>
+    pub fn new<'b>(ctx: &'a mut Context, words: &[u32]) -> Result<Self>
     where
         'a: 'b,
     {
         return Ok(Self {
-            inner: GenericCompiler::new(ctx, sys::spvc_backend::SPVC_BACKEND_GLSL, parsed_ir)?,
+            inner: GenericCompiler::new(ctx, sys::spvc_backend::SPVC_BACKEND_GLSL, words)?,
         });
     }
 
@@ -52,6 +55,7 @@ impl<'a> GlslCompiler<'a> {
     }
 }
 
+#[docfg(feature = "glsl")]
 impl<'a> From<GlslCompiler<'a>> for GenericCompiler<'a> {
     #[inline]
     fn from(value: GlslCompiler<'a>) -> Self {
@@ -59,6 +63,7 @@ impl<'a> From<GlslCompiler<'a>> for GenericCompiler<'a> {
     }
 }
 
+#[docfg(feature = "glsl")]
 impl<'a> Compiler<'a> for GlslCompiler<'a> {
     fn raw_compile(self) -> Result<&'a std::ffi::CStr> {
         self.inner.raw_compile()
