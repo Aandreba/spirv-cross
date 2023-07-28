@@ -12,8 +12,11 @@ hlsl = ["glsl"]
 msl = ["glsl"]
 
 [build-dependencies]
+anyhow = "1.0.72"
 bindgen = "0.66.1"
 cc = { version = "1.0.79", features = ["parallel"] }
+dirs = "5.0.1"
+walkdir = "2.3.3"
 
 [dependencies]
 docfg = "0.1.0"

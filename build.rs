@@ -1,17 +1,26 @@
 use bindgen::EnumVariation;
-use std::{env, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let out_path = env::var_os("OUT_DIR").unwrap();
 
-    let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR");
-    let is_apple = target_vendor.is_ok() && target_vendor.unwrap() == "apple";
+    let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR")?;
+    let is_apple = target_vendor == "apple";
 
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS");
-    let is_ios = target_os.is_ok() && target_os.unwrap() == "ios";
+    let target_os = std::env::var("CARGO_CFG_TARGET_OS")?;
+    let is_ios = target_os == "ios";
+    let is_wasi = target_os == "wasi";
 
     let mut build = cc::Build::new();
     build.cpp(true);
+
+    if is_wasi {
+        let libc_path = wasi_libc();
+        build.file(libc_path);
+    }
 
     let compiler = build.try_get_compiler();
     let is_clang = compiler.is_ok() && compiler.unwrap().is_like_clang();
@@ -49,6 +58,8 @@ fn main() {
 
     build.compile("spirv-cross-rust-wrapper");
     generate_bindings(out_path.as_ref());
+
+    return Ok(());
 }
 
 fn generate_bindings(out_path: &Path) {
@@ -63,4 +74,13 @@ fn generate_bindings(out_path: &Path) {
         .expect("Unable to generate bindings")
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+}
+
+fn wasi_libc() -> PathBuf {
+    return PathBuf::from(std::env::var_os("RUSTUP_HOME").unwrap())
+        .join("toolchains")
+        .join(std::env::var_os("RUSTUP_TOOLCHAIN").unwrap())
+        .join("lib/rustlib")
+        .join(std::env::var_os("TARGET").unwrap())
+        .join("self-contained/libc.a");
 }
