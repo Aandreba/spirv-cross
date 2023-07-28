@@ -1,12 +1,15 @@
-use crate::{sys, Error, Result};
-use std::{
-    ffi::{c_char, c_void, CStr},
-    mem::MaybeUninit,
+use crate::{
+    error::{Error, Result},
+    parsed_ir::OwnedParsedIr,
+    sys,
 };
+use docfg::docfg;
+use std::{ffi::CStr, mem::MaybeUninit};
 
 pub struct Context {
-    pub(crate) inner: sys::spvc_context,
-    error_callback: Option<Box<dyn FnMut()>>,
+    pub inner: sys::spvc_context,
+    #[cfg(feature = "nightly")]
+    error_callback: Option<ThinBox<dyn FnMut(&CStr)>>,
 }
 
 impl Context {
@@ -16,6 +19,7 @@ impl Context {
             return match sys::spvc_context_create(context.as_mut_ptr()) {
                 sys::spvc_result::SPVC_SUCCESS => Ok(Self {
                     inner: context.assume_init(),
+                    #[cfg(feature = "nightly")]
                     error_callback: None,
                 }),
                 other => Err(other.into()),
@@ -23,11 +27,41 @@ impl Context {
         }
     }
 
-    pub fn set_error_callback<F: FnMut(&CStr)>(&mut self, f: F) {
-        unsafe extern "C" fn error_callback_wrapper(user_data: *mut c_void, error: *const c_char) {}
+    #[inline]
+    pub fn parse_spirv<'a>(&'a mut self, words: &[u32]) -> Result<OwnedParsedIr<'a>> {
+        OwnedParsedIr::new(self, words)
     }
 
-    fn get_error(&self, code: sys::spvc_result) -> Result<()> {
+    #[docfg(feature = "nightly")]
+    pub fn set_error_callback<F: FnMut(&CStr)>(&mut self, f: F) {
+        use std::boxed::ThinBox;
+
+        unsafe extern "C" fn error_callback_wrapper(
+            user_data: *mut std::ffi::c_void,
+            error: *const std::ffi::c_char,
+        ) {
+            let mut f =
+                ManuallyDrop::new(core::mem::transmute::<_, ThinBox<dyn FnMut(&CStr)>>(src));
+            (f)(CStr::from_ptr(error));
+        }
+
+        let f = ThinBox::<dyn FnMut(&CStr)>::new_unsize(f);
+        unsafe {
+            sys::spvc_context_set_error_callback(
+                self.inner,
+                Some(error_callback_wrapper),
+                core::mem::transmute_copy(&f),
+            );
+            self.error_callback = Some(f);
+        }
+    }
+
+    #[inline]
+    pub unsafe fn release_allocations(&mut self) {
+        unsafe { sys::spvc_context_release_allocations(self.inner) }
+    }
+
+    pub(crate) fn get_error(&self, code: sys::spvc_result) -> Result<()> {
         if code == sys::spvc_result::SPVC_SUCCESS {
             return Ok(());
         }
@@ -48,6 +82,9 @@ impl Context {
 impl Drop for Context {
     #[inline]
     fn drop(&mut self) {
-        todo!()
+        unsafe { sys::spvc_context_destroy(self.inner) }
     }
 }
+
+unsafe impl Send for Context {}
+unsafe impl Sync for Context {}

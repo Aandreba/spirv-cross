@@ -1,6 +1,5 @@
-use std::{env, path::Path};
-
 use bindgen::EnumVariation;
+use std::{env, path::Path};
 
 fn main() {
     let out_path = env::var_os("OUT_DIR").unwrap();
