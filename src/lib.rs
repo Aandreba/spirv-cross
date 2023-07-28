@@ -52,7 +52,6 @@ pub fn bytes_to_words(bytes: &[u8]) -> Option<Cow<'_, [u32]>> {
                     word_count,
                 ))
             },
-
             _ => {
                 let mut words = Vec::<u32>::with_capacity(word_count);
                 unsafe {
