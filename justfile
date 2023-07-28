@@ -1,6 +1,7 @@
 export RUST_BACKTRACE := "1"
 
 submodule:
+    rm -rf SPIRV-Cross
     git submodule update --init --recursive
 
 doc:
@@ -10,4 +11,4 @@ test:
     cargo +nightly test --all --all-features -- --nocapture
 
 test-wasm:
-    cargo +nightly build --tests --all-features --target wasm32-wasi
+    cargo +nightly wasi test --verbose --all-features

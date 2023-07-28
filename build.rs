@@ -1,71 +1,118 @@
 use bindgen::EnumVariation;
+use flate2::read::GzDecoder;
 use std::{
     env,
     path::{Path, PathBuf},
 };
+use tar::Archive;
 
-fn main() -> anyhow::Result<()> {
-    let out_path = env::var_os("OUT_DIR").unwrap();
-
-    let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR")?;
-    let is_apple = target_vendor == "apple";
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let out_path = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
     let target_os = std::env::var("CARGO_CFG_TARGET_OS")?;
-    let is_ios = target_os == "ios";
-    let is_wasi = target_os == "wasi";
+    let sysroot = match target_os.as_str() {
+        "wasi" => Some(wasi_sdk(&out_path).await?),
+        _ => None,
+    };
 
-    let mut build = cc::Build::new();
-    build.cpp(true);
+    let lib_sysroot = sysroot.clone();
+    let lib = tokio::task::spawn_blocking(move || build_library(lib_sysroot));
+    let bindings = tokio::task::spawn_blocking(move || generate_bindings(out_path, sysroot));
 
-    if is_wasi {
-        let libc_path = wasi_libc();
-        build.file(libc_path);
-    }
-
-    let compiler = build.try_get_compiler();
-    let is_clang = compiler.is_ok() && compiler.unwrap().is_like_clang();
-
-    if is_apple && (is_clang || is_ios) {
-        build.flag("-std=c++14").cpp_set_stdlib("c++");
-    } else {
-        build.flag_if_supported("-std=c++14");
-    }
-
-    build
-        .file("SPIRV-Cross/spirv_cfg.cpp")
-        .file("SPIRV-Cross/spirv_cross.cpp")
-        .file("SPIRV-Cross/spirv_cross_c.cpp")
-        .file("SPIRV-Cross/spirv_cross_parsed_ir.cpp")
-        .file("SPIRV-Cross/spirv_parser.cpp")
-        .file("SPIRV-Cross/spirv_cross_util.cpp");
-
-    // Ideally the GLSL compiler would be omitted here, but the HLSL and MSL compiler
-    // currently inherit from it. So it's necessary to unconditionally include it here.
-    #[cfg(feature = "glsl")]
-    build
-        .file("SPIRV-Cross/spirv_glsl.cpp")
-        .define("SPIRV_CROSS_C_API_GLSL", None);
-
-    #[cfg(feature = "hlsl")]
-    build
-        .file("SPIRV-Cross/spirv_hlsl.cpp")
-        .define("SPIRV_CROSS_C_API_HLSL", None);
-
-    #[cfg(feature = "msl")]
-    build
-        .file("SPIRV-Cross/spirv_msl.cpp")
-        .define("SPIRV_CROSS_C_API_MSL", None);
-
-    build.compile("spirv-cross-rust-wrapper");
-    generate_bindings(out_path.as_ref());
+    let (lib, _) = tokio::try_join!(lib, bindings)?;
+    lib?;
 
     return Ok(());
 }
 
-fn generate_bindings(out_path: &Path) {
-    // For native targets, include all types and functions
-    bindgen::Builder::default()
+fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
+    let mut build = cmake::Config::new("SPIRV-Cross");
+    build
+        .define("SPIRV_CROSS_CLI", "OFF")
+        .define("SPIRV_CROSS_ENABLE_TESTS", "OFF")
+        .define("SPIRV_CROSS_ENABLE_C_API", "ON")
+        .define("SPIRV_CROSS_SKIP_INSTALL", "ON")
+        .define("SPIRV_CROSS_STATIC", "ON")
+        .define("SPIRV_CROSS_SHARED", "OFF");
+
+    if let Some(ref sdk) = wasi_sdk {
+        build
+            .define("SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS", "ON")
+            .define(
+                "CMAKE_TOOLCHAIN_FILE",
+                sdk.join("share/cmake/wasi-sdk.cmake"),
+            )
+            .define("WASI_SDK_PREFIX", sdk)
+            .cxxflag(format!(
+                "-L{}",
+                sdk.join("share/wasi-sysroot/lib/wasm32-wasi").display()
+            ))
+            .cxxflag("-lc")
+            .cxxflag("-lc++")
+            .cxxflag("-lc++abi")
+            .cxxflag("-lc++experimental");
+    }
+
+    build.define(
+        "SPIRV_CROSS_ENABLE_GLSL",
+        cmake_flag(cfg!(feature = "glsl")),
+    );
+
+    build.define(
+        "SPIRV_CROSS_ENABLE_HLSL",
+        cmake_flag(cfg!(feature = "hlsl")),
+    );
+
+    build.define("SPIRV_CROSS_ENABLE_MSL", cmake_flag(cfg!(feature = "msl")));
+
+    let out_path = build.no_build_target(true).build();
+    println!(
+        "cargo:rustc-link-search=native={}",
+        out_path.join("build").display()
+    );
+
+    for entry in [
+        "spirv-cross-c",
+        "spirv-cross-core",
+        "spirv-cross-cpp",
+        "spirv-cross-glsl",
+        "spirv-cross-hlsl",
+        "spirv-cross-msl",
+        "spirv-cross-reflect",
+        "spirv-cross-util",
+    ] {
+        println!("cargo:rustc-link-lib=static={entry}");
+    }
+
+    if let Some(sysroot) = wasi_sdk {
+        println!(
+            "cargo:rustc-link-search=native={}",
+            sysroot.join("share/wasi-sysroot/lib/wasm32-wasi").display()
+        );
+
+        println!("cargo:rustc-link-lib=static=c");
+        println!("cargo:rustc-link-lib=static=c++");
+        println!("cargo:rustc-link-lib=static=c++abi");
+        println!("cargo:rustc-link-lib=static=c++experimental");
+    } else {
+        println!("cargo:rustc-link-lib=stdc++");
+    }
+
+    return Ok(());
+}
+
+fn generate_bindings(out_path: PathBuf, wasi_sysroot: Option<PathBuf>) {
+    let mut builder = bindgen::Builder::default()
         .header("SPIRV-Cross/spirv_cross_c.h")
+        .clang_arg("-DSPVC_EXPORT_SYMBOLS");
+
+    if let Some(sysroot) = wasi_sysroot {
+        builder = builder.clang_arg(format!("--sysroot={}", sysroot.display()));
+    }
+
+    // For native targets, include all types and functions
+    builder
         .default_enum_style(EnumVariation::Rust {
             non_exhaustive: true,
         })
@@ -76,11 +123,58 @@ fn generate_bindings(out_path: &Path) {
         .expect("Couldn't write bindings!");
 }
 
-fn wasi_libc() -> PathBuf {
-    return PathBuf::from(std::env::var_os("RUSTUP_HOME").unwrap())
-        .join("toolchains")
-        .join(std::env::var_os("RUSTUP_TOOLCHAIN").unwrap())
-        .join("lib/rustlib")
-        .join(std::env::var_os("TARGET").unwrap())
-        .join("self-contained/libc.a");
+async fn wasi_sdk(out_path: &Path) -> anyhow::Result<PathBuf> {
+    let latest_release = octocrab::instance()
+        .repos("WebAssembly", "wasi-sdk")
+        .releases()
+        .get_latest()
+        .await?;
+
+    let target = 'brk: {
+        cfg_if::cfg_if! {
+            if #[cfg(windows)] {
+                break 'brk ".m-mingw";
+            } else if #[cfg(target_os = "linux")] {
+                break 'brk "-linux";
+            } else if #[cfg(target_os = "macos")] {
+                break 'brk "-macos";
+            }
+        }
+    };
+
+    let full_version = format!("{}.0", latest_release.name.unwrap());
+    let asset_name = format!("{full_version}{target}.tar.gz");
+    println!("{}", asset_name);
+
+    for asset in latest_release.assets {
+        println!("{}", asset.name);
+        if asset.name == asset_name {
+            if !tokio::fs::try_exists(out_path.join(&full_version)).await? {
+                println!("{}", asset.browser_download_url);
+                let contents = reqwest::get(asset.browser_download_url)
+                    .await?
+                    .bytes()
+                    .await?;
+
+                let unpack_out_path = out_path.to_path_buf();
+                tokio::task::spawn_blocking(move || {
+                    let tar = GzDecoder::new(&contents as &[u8]);
+                    let mut archive = Archive::new(tar);
+                    archive.unpack(unpack_out_path)
+                })
+                .await??;
+            }
+
+            return Ok(out_path.join(full_version));
+        }
+    }
+
+    panic!("Release not found!");
+}
+
+fn cmake_flag(v: bool) -> &'static str {
+    match v {
+        true => "ON",
+        false => "OFF",
+    }
 }
