@@ -76,14 +76,18 @@ fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
         "spirv-cross-c",
         "spirv-cross-core",
         "spirv-cross-cpp",
-        "spirv-cross-glsl",
-        "spirv-cross-hlsl",
-        "spirv-cross-msl",
         "spirv-cross-reflect",
         "spirv-cross-util",
     ] {
         println!("cargo:rustc-link-lib=static={entry}");
     }
+
+    #[cfg(feature = "glsl")]
+    println!("cargo:rustc-link-lib=static=spirv-cross-glsl");
+    #[cfg(feature = "hlsl")]
+    println!("cargo:rustc-link-lib=static=spirv-cross-hlsl");
+    #[cfg(feature = "msl")]
+    println!("cargo:rustc-link-lib=static=spirv-cross-msl");
 
     if let Some(sysroot) = wasi_sdk {
         println!(
