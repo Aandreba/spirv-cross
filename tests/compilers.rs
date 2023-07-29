@@ -1,4 +1,4 @@
-use spirv_cross::{bytes_to_words, compiler::Compiler, error::Result, Context};
+use spirv_cross::{bytes_to_words, compiler::Compiler, Context, Result};
 
 #[cfg(feature = "glsl")]
 #[test]

@@ -1,7 +1,12 @@
 [package]
 name = "spirv-cross"
+description = "Bindings to SPIRV-Cross API"
+repository = "https://github.com/Aandreba/spirv-cross"
+license = "MIT"
 version = "0.1.0"
 edition = "2021"
+keywords = ["spirv", "vulkan", "glsl", "msl", "hlsl"]
+categories = ["api-bindings", "compilers", "external-ffi-bindings", "wasm"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
