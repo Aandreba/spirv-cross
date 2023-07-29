@@ -1,3 +1,5 @@
+#![allow(clippy::needless_return)]
+
 use bindgen::EnumVariation;
 use flate2::read::GzDecoder;
 use std::{
@@ -66,11 +68,12 @@ fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
 
     build.define("SPIRV_CROSS_ENABLE_MSL", cmake_flag(cfg!(feature = "msl")));
 
-    let out_path = build.no_build_target(true).build();
-    println!(
-        "cargo:rustc-link-search=native={}",
-        out_path.join("build").display()
-    );
+    let out_path = build.no_build_target(true).build().join("build");
+    #[cfg(windows)]
+    let out_path = out_path.join(build.get_profile());
+
+    println!("cargo:rustc-link-search=native={}", out_path.display());
+    let ext = cfg!(windows).then_some("d").unwrap_or_default();
 
     for entry in [
         "spirv-cross-c",
@@ -79,15 +82,15 @@ fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
         "spirv-cross-reflect",
         "spirv-cross-util",
     ] {
-        println!("cargo:rustc-link-lib=static={entry}");
+        println!("cargo:rustc-link-lib=static={entry}{ext}",);
     }
 
     #[cfg(feature = "glsl")]
-    println!("cargo:rustc-link-lib=static=spirv-cross-glsl");
+    println!("cargo:rustc-link-lib=static=spirv-cross-glsl{ext}");
     #[cfg(feature = "hlsl")]
-    println!("cargo:rustc-link-lib=static=spirv-cross-hlsl");
+    println!("cargo:rustc-link-lib=static=spirv-cross-hlsl{ext}");
     #[cfg(feature = "msl")]
-    println!("cargo:rustc-link-lib=static=spirv-cross-msl");
+    println!("cargo:rustc-link-lib=static=spirv-cross-msl{ext}");
 
     if let Some(sysroot) = wasi_sdk {
         println!(
@@ -99,8 +102,8 @@ fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
         println!("cargo:rustc-link-lib=static=c++");
         println!("cargo:rustc-link-lib=static=c++abi");
         println!("cargo:rustc-link-lib=static=c++experimental");
-    } else {
-        println!("cargo:rustc-link-lib=stdc++");
+    } else if let Some(cpp) = cpp_stdlib(std::env::var("TARGET")?) {
+        println!("cargo:rustc-link-lib={cpp}");
     }
 
     return Ok(());
@@ -180,5 +183,17 @@ fn cmake_flag(v: bool) -> &'static str {
     match v {
         true => "ON",
         false => "OFF",
+    }
+}
+
+fn cpp_stdlib(target: String) -> Option<&'static str> {
+    if target.contains("msvc") {
+        None
+    } else if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
+        Some("c++")
+    } else if target.contains("android") {
+        Some("c++_shared")
+    } else {
+        Some("stdc++")
     }
 }

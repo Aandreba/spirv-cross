@@ -1,7 +1,7 @@
+set windows-shell := ["powershell.exe", "-c"]
 export RUST_BACKTRACE := "1"
 
 submodule:
-    rm -rf SPIRV-Cross
     git submodule update --init --recursive
 
 doc:
