@@ -23,7 +23,7 @@ impl<'a> GlslCompiler<'a> {
         self.inner
     }
 
-    pub fn semver(self, version: Version) -> Result<Self> {
+    pub fn semver(self, version: &Version) -> Result<Self> {
         self.version(version.major as u32, version.minor as u32)
     }
 

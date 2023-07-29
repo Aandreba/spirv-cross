@@ -11,11 +11,72 @@ pub mod hlsl;
 #[cfg(feature = "glsl")]
 #[doc(inline)]
 pub use glsl::GlslCompiler;
+#[cfg(feature = "hlsl")]
+#[doc(inline)]
+pub use hlsl::HlslCompiler;
 
 pub trait Compiler<'a>: Sized {
     fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self>;
     fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self>;
     fn raw_compile(self) -> Result<&'a CStr>;
+
+    fn force_temporary(self, force_temporary: bool) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_FORCE_TEMPORARY,
+            force_temporary,
+        )
+    }
+
+    fn flatten_multidimensional_arrays(
+        self,
+        flatten_multidimensional_arrays: bool,
+    ) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_FLATTEN_MULTIDIMENSIONAL_ARRAYS,
+            flatten_multidimensional_arrays,
+        )
+    }
+
+    fn fixup_depth_convention(self, fixup_depth_convention: bool) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_FIXUP_DEPTH_CONVENTION,
+            fixup_depth_convention,
+        )
+    }
+
+    fn flip_vertex_y(self, flip_vertex_y: bool) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_FLIP_VERTEX_Y,
+            flip_vertex_y,
+        )
+    }
+
+    fn emit_line_directives(self, emit_line_directives: bool) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_EMIT_LINE_DIRECTIVES,
+            emit_line_directives,
+        )
+    }
+
+    fn enable_storage_image_qualifier_deduction(
+        self,
+        enable_storage_image_qualifier_deduction: bool,
+    ) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_ENABLE_STORAGE_IMAGE_QUALIFIER_DEDUCTION,
+            enable_storage_image_qualifier_deduction,
+        )
+    }
+
+    fn force_zero_initialized_variables(
+        self,
+        force_zero_initialized_variables: bool,
+    ) -> Result<Self> {
+        self.set_bool(
+            sys::spvc_compiler_option::SPVC_COMPILER_OPTION_FORCE_ZERO_INITIALIZED_VARIABLES,
+            force_zero_initialized_variables,
+        )
+    }
 
     fn compile(self) -> Result<String> {
         let src = self.raw_compile()?;

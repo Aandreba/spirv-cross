@@ -21,7 +21,7 @@ impl<'a> HlslCompiler<'a> {
         self.inner
     }
 
-    pub fn shader_model_semver(self, version: Version) -> Result<Self> {
+    pub fn shader_model_semver(self, version: &Version) -> Result<Self> {
         self.shader_model(version.major as u32, version.minor as u32)
     }
 

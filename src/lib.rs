@@ -26,6 +26,8 @@ flat_mod! {
 }
 
 #[doc(inline)]
+pub use compiler::Compiler;
+#[doc(inline)]
 pub use error::Error;
 
 pub const SPVC_VERSION: Version = Version::new(
