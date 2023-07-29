@@ -1,0 +1,53 @@
+name: Tests
+
+on: push
+
+jobs:
+  test-examples:
+    strategy:
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - wasm32-wasi
+
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            runner: test
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            runner: test 
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            runner: test  
+          - target: wasm32-wasi
+            os: ubuntu-latest
+            runner: wasi test
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Restore cache
+      uses: actions/cache@v3
+      with:
+        path: |
+            ~/.wasmtime
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+        key: cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          cargo-${{ matrix.target }}-
+
+    - run: rustup target add ${{ matrix.target }}
+    
+    - name: Install WASI runner
+      if: ${{ matrix.target }} == "wasm32-wasi"
+      run: $(curl https://wasmtime.dev/install.sh -sSf | bash) && cargo install cargo-wasi
+
+    - run: cargo +nightly ${{ matrix.runner }} --all-features

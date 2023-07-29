@@ -104,23 +104,31 @@ impl<'a> Compiler<'a> for GenericCompiler<'a> {
             return Ok(CStr::from_ptr(source.assume_init()));
         }
     }
+
+    fn compile(self) -> Result<String>
+    where
+        Self: Sized,
+    {
+        let src = self.raw_compile()?;
+        return Ok(src.to_string_lossy().into_owned());
+    }
 }
 
 impl sys::spvc_compiler_option {
     pub fn is_common(self) -> bool {
-        return (self as u32) & sys::SPVC_COMPILER_OPTION_COMMON_BIT == 1;
+        return (self as u32) & sys::SPVC_COMPILER_OPTION_COMMON_BIT != 0;
     }
 
     pub fn is_glsl(self) -> bool {
-        return (self as u32) & sys::SPVC_COMPILER_OPTION_GLSL_BIT == 1;
+        return (self as u32) & sys::SPVC_COMPILER_OPTION_GLSL_BIT != 0;
     }
 
     pub fn is_hlsl(self) -> bool {
-        return (self as u32) & sys::SPVC_COMPILER_OPTION_HLSL_BIT == 1;
+        return (self as u32) & sys::SPVC_COMPILER_OPTION_HLSL_BIT != 0;
     }
 
     pub fn is_msl(self) -> bool {
-        return (self as u32) & sys::SPVC_COMPILER_OPTION_MSL_BIT == 1;
+        return (self as u32) & sys::SPVC_COMPILER_OPTION_MSL_BIT != 0;
     }
 }
 

@@ -151,13 +151,10 @@ async fn wasi_sdk(out_path: &Path) -> anyhow::Result<PathBuf> {
 
     let full_version = format!("{}.0", latest_release.name.unwrap());
     let asset_name = format!("{full_version}{target}.tar.gz");
-    println!("{}", asset_name);
 
     for asset in latest_release.assets {
-        println!("{}", asset.name);
         if asset.name == asset_name {
             if !tokio::fs::try_exists(out_path.join(&full_version)).await? {
-                println!("{}", asset.browser_download_url);
                 let contents = reqwest::get(asset.browser_download_url)
                     .await?
                     .bytes()

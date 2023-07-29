@@ -1,3 +1,4 @@
+#![allow(clippy::needless_return)]
 #![cfg_attr(feature = "nightly", feature(thin_box))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
