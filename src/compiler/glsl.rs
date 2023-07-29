@@ -87,64 +87,55 @@ impl<'a> GlslCompiler<'a> {
         return Ok(self);
     }
 
-    pub fn enable_420_pack_extension(mut self, enable_420_pack_extension: bool) -> Result<Self> {
-        self.inner = self.inner.set_bool(
+    pub fn enable_420_pack_extension(self, enable_420_pack_extension: bool) -> Result<Self> {
+        return self.set_bool(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_ENABLE_420PACK_EXTENSION,
             enable_420_pack_extension,
-        )?;
-        return Ok(self);
+        );
     }
 
     pub fn emit_push_constant_as_uniform_buffer(
-        mut self,
+        self,
         emit_push_constant_as_uniform_buffer: bool,
     ) -> Result<Self> {
-        self.inner = self.inner.set_bool(
+        return self.set_bool(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_EMIT_PUSH_CONSTANT_AS_UNIFORM_BUFFER,
             emit_push_constant_as_uniform_buffer,
-        )?;
-        return Ok(self);
+        );
     }
 
     pub fn emit_uniform_buffer_as_plain_uniforms(
-        mut self,
+        self,
         emit_uniform_buffer_as_plain_uniforms: bool,
     ) -> Result<Self> {
-        self.inner = self.inner.set_bool(
+        return self.set_bool(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_EMIT_UNIFORM_BUFFER_AS_PLAIN_UNIFORMS,
             emit_uniform_buffer_as_plain_uniforms,
-        )?;
-        return Ok(self);
+        );
     }
 
-    pub fn force_flattened_io_blocks(mut self, force_flattened_io_blocks: bool) -> Result<Self> {
-        self.inner = self.inner.set_bool(
+    pub fn force_flattened_io_blocks(self, force_flattened_io_blocks: bool) -> Result<Self> {
+        return self.set_bool(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_FORCE_FLATTENED_IO_BLOCKS,
             force_flattened_io_blocks,
-        )?;
-        return Ok(self);
+        );
     }
 
-    pub fn ovr_multiview_view_count(
-        mut self,
-        ovr_multiview_view_count: u32,
-    ) -> Result<Self> {
-        self.inner = self.inner.set_uint(
+    pub fn ovr_multiview_view_count(self, ovr_multiview_view_count: u32) -> Result<Self> {
+        return self.set_uint(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_OVR_MULTIVIEW_VIEW_COUNT,
             ovr_multiview_view_count,
-        )?;
-        return Ok(self);
+        );
     }
 
     pub fn enable_row_major_load_workaround(
-        mut self,
+        self,
         enable_row_major_load_workaround: bool,
     ) -> Result<Self> {
-        self.inner = self.inner.set_bool(
+        return self.set_bool(
             spvc_compiler_option::SPVC_COMPILER_OPTION_GLSL_ENABLE_ROW_MAJOR_LOAD_WORKAROUND,
             enable_row_major_load_workaround,
-        )?;
-        return Ok(self);
+        );
     }
 }
 
@@ -160,6 +151,20 @@ impl<'a> From<GlslCompiler<'a>> for GenericCompiler<'a> {
 impl<'a> Compiler<'a> for GlslCompiler<'a> {
     fn raw_compile(self) -> Result<&'a std::ffi::CStr> {
         self.inner.raw_compile()
+    }
+
+    fn set_uint(
+        mut self,
+        option: sys::spvc_compiler_option,
+        value: std::ffi::c_uint,
+    ) -> Result<Self> {
+        self.inner = self.inner.set_uint(option, value)?;
+        return Ok(self);
+    }
+
+    fn set_bool(mut self, option: sys::spvc_compiler_option, value: bool) -> Result<Self> {
+        self.inner = self.inner.set_bool(option, value)?;
+        return Ok(self);
     }
 }
 

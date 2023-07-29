@@ -7,13 +7,12 @@ use std::mem::MaybeUninit;
 
 pub mod glsl;
 
-pub trait Compiler<'a> {
+pub trait Compiler<'a>: Sized {
+    fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self>;
+    fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self>;
     fn raw_compile(self) -> Result<&'a CStr>;
 
-    fn compile(self) -> Result<String>
-    where
-        Self: Sized,
-    {
+    fn compile(self) -> Result<String> {
         let src = self.raw_compile()?;
         return Ok(src.to_string_lossy().into_owned());
     }
@@ -62,8 +61,10 @@ impl<'a> GenericCompiler<'a> {
             });
         }
     }
+}
 
-    pub fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self> {
+impl<'a> Compiler<'a> for GenericCompiler<'a> {
+    fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self> {
         unsafe {
             self.ctx.get_error(sys::spvc_compiler_options_set_uint(
                 self.options,
@@ -74,7 +75,7 @@ impl<'a> GenericCompiler<'a> {
         return Ok(self);
     }
 
-    pub fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self> {
+    fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self> {
         unsafe {
             self.ctx.get_error(sys::spvc_compiler_options_set_bool(
                 self.options,
@@ -84,9 +85,7 @@ impl<'a> GenericCompiler<'a> {
         }
         return Ok(self);
     }
-}
 
-impl<'a> Compiler<'a> for GenericCompiler<'a> {
     fn raw_compile(self) -> Result<&'a CStr> {
         let mut source = MaybeUninit::uninit();
         unsafe {
