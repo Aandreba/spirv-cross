@@ -29,6 +29,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
 
     - name: Restore cache
       id: cache
