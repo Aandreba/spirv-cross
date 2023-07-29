@@ -45,6 +45,7 @@ jobs:
         restore-keys: |
           cargo-${{ matrix.target }}-
 
+    - run: rustup override set nightly
     - run: rustup target add ${{ matrix.target }}
     
     - if: matrix.target == 'wasm32-wasi'
