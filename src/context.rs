@@ -58,7 +58,7 @@ impl Context {
                 let user_data = unsafe { core::mem::transmute_copy(&f) };
             } else {
                 let mut f = Box::new(Box::new(f) as Box<dyn FnMut(&CStr)>);
-                let user_data = (&mut f as &mut Box<dyn FnMut(&CStr)>) as *mut Box<dyn FnMut(&CStr)> as *mut c_void;
+                let user_data = (&mut f as &mut Box<dyn FnMut(&CStr)>) as *mut Box<dyn FnMut(&CStr)> as *mut std::ffi::c_void;
             }
         }
 

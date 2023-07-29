@@ -34,3 +34,19 @@ pub fn hlsl() -> Result<()> {
 
     return Ok(());
 }
+
+#[cfg(feature = "msl")]
+#[test]
+pub fn msl() -> Result<()> {
+    use spirv_cross::compiler::msl::MslCompiler;
+    let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
+
+    let mut context = Context::new()?;
+    #[cfg(feature = "nightly")]
+    context.set_error_callback(|err| eprintln!("{}", err.to_string_lossy()));
+
+    let msl = MslCompiler::new(&mut context, &words)?;
+    println!("{}", msl.compile()?);
+
+    return Ok(());
+}
