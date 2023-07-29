@@ -2,15 +2,12 @@ use super::{Compiler, GenericCompiler};
 use crate::error::Result;
 use crate::sys::{self, spvc_compiler_option};
 use crate::Context;
-use docfg::docfg;
 use semver::Version;
 
-#[docfg(feature = "glsl")]
 pub struct GlslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }
 
-#[docfg(feature = "glsl")]
 impl<'a> GlslCompiler<'a> {
     pub fn new(ctx: &'a mut Context, words: &[u32]) -> Result<Self> {
         return Ok(Self {
@@ -136,7 +133,6 @@ impl<'a> GlslCompiler<'a> {
     }
 }
 
-#[docfg(feature = "glsl")]
 impl<'a> From<GlslCompiler<'a>> for GenericCompiler<'a> {
     #[inline]
     fn from(value: GlslCompiler<'a>) -> Self {
@@ -144,7 +140,6 @@ impl<'a> From<GlslCompiler<'a>> for GenericCompiler<'a> {
     }
 }
 
-#[docfg(feature = "glsl")]
 impl<'a> Compiler<'a> for GlslCompiler<'a> {
     fn raw_compile(self) -> Result<&'a std::ffi::CStr> {
         self.inner.raw_compile()

@@ -5,8 +5,20 @@ use std::ffi::c_uint;
 use std::ffi::CStr;
 use std::mem::MaybeUninit;
 
+/// OpenGL Shading Language compiler & options
+#[cfg(feature = "glsl")]
+#[cfg_attr(docsrs, doc(cfg(feature = "glsl")))]
 pub mod glsl;
+
+/// High Level Shading Language compiler & options
+#[cfg(feature = "hlsl")]
+#[cfg_attr(docsrs, doc(cfg(feature = "hlsl")))]
 pub mod hlsl;
+
+/// Metal Shading Language compiler & options
+#[cfg(feature = "msl")]
+#[cfg_attr(docsrs, doc(cfg(feature = "msl")))]
+pub mod msl;
 
 #[cfg(feature = "glsl")]
 #[doc(inline)]
@@ -14,6 +26,9 @@ pub use glsl::GlslCompiler;
 #[cfg(feature = "hlsl")]
 #[doc(inline)]
 pub use hlsl::HlslCompiler;
+#[cfg(feature = "msl")]
+#[doc(inline)]
+pub use msl::MslCompiler;
 
 /// A SPIRV-Cross compiler to an unkown target.
 pub trait Compiler<'a>: Sized {

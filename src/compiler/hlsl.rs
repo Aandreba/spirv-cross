@@ -3,12 +3,10 @@ use crate::{error::Result, sys, Context};
 use docfg::docfg;
 use semver::Version;
 
-#[docfg(feature = "hlsl")]
 pub struct HlslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }
 
-#[docfg(feature = "hlsl")]
 impl<'a> HlslCompiler<'a> {
     pub fn new(ctx: &'a mut Context, words: &[u32]) -> Result<Self> {
         return Ok(Self {
@@ -92,7 +90,6 @@ impl<'a> HlslCompiler<'a> {
     }
 }
 
-#[docfg(feature = "hlsl")]
 impl<'a> From<HlslCompiler<'a>> for GenericCompiler<'a> {
     #[inline]
     fn from(value: HlslCompiler<'a>) -> Self {
@@ -100,7 +97,6 @@ impl<'a> From<HlslCompiler<'a>> for GenericCompiler<'a> {
     }
 }
 
-#[docfg(feature = "hlsl")]
 impl<'a> Compiler<'a> for HlslCompiler<'a> {
     fn raw_compile(self) -> Result<&'a std::ffi::CStr> {
         self.inner.raw_compile()
