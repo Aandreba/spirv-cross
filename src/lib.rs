@@ -61,7 +61,7 @@ pub fn bytes_to_words(bytes: &[u8]) -> Option<Cow<'_, [u32]>> {
                         words.as_mut_ptr().cast(),
                         SIZE * word_count,
                     );
-                    words.set_len(bytes.len() / SIZE);
+                    words.set_len(word_count);
                 }
                 Cow::Owned(words)
             }
