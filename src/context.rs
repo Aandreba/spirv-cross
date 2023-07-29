@@ -8,6 +8,7 @@ use std::{
     mem::MaybeUninit,
 };
 
+/// Manager of SPIRV-Cross resources
 pub struct Context {
     pub inner: sys::spvc_context,
     #[cfg(not(feature = "nightly"))]
@@ -17,6 +18,7 @@ pub struct Context {
 }
 
 impl Context {
+    /// Creates a new empty context.
     pub fn new() -> Result<Self> {
         let mut context = MaybeUninit::uninit();
         unsafe {
@@ -30,6 +32,10 @@ impl Context {
         }
     }
 
+    /// Sets a new callback function to be called whenever a context returns an error.
+    ///
+    /// If `nightly` is enabled, this function is optimized to a single memory allocation.
+    /// Otherwise, two memory allocations are used to store the callback.
     pub fn set_error_callback<F: 'static + FnMut(&CStr)>(&mut self, f: F) {
         unsafe extern "C" fn error_callback_wrapper(
             user_data: *mut std::ffi::c_void,
@@ -50,7 +56,7 @@ impl Context {
         }
 
         cfg_if::cfg_if! {
-                if #[cfg(feature = "nightly")] {
+            if #[cfg(feature = "nightly")] {
                 use std::boxed::ThinBox;
                 let f = ThinBox::<dyn FnMut(&CStr)>::new_unsize(f);
                 let user_data = unsafe { core::mem::transmute_copy(&f) };
@@ -70,6 +76,10 @@ impl Context {
         }
     }
 
+    /// Release all the resources associated to this context.
+    ///
+    /// This method is safe because the shared reference ensures no other part of the code
+    /// has access to the context.
     #[inline]
     pub fn release_allocations(&mut self) {
         unsafe { sys::spvc_context_release_allocations(self.inner) }
