@@ -45,16 +45,15 @@ jobs:
         restore-keys: |
           cargo-${{ matrix.target }}-
 
-    - run: rustup update
     - run: rustup override set nightly
     - run: rustup target add ${{ matrix.target }}
     
     - if: matrix.target == 'wasm32-wasi'
       name: Install Wasmtime
-      run: cargo install wasmtime-cli -Z install-upgrade
+      run: cargo install wasmtime-cli
 
     - if: matrix.target == 'wasm32-wasi'
       name: Install WASI runner
-      run: cargo install cargo-wasi -Z install-upgrade
+      run: cargo install cargo-wasi
 
     - run: cargo +nightly ${{ matrix.runner }} --all-features
