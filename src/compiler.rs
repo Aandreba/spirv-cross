@@ -7,6 +7,10 @@ use std::mem::MaybeUninit;
 
 pub mod glsl;
 
+#[cfg(feature = "glsl")]
+#[doc(inline)]
+pub use glsl::GlslCompiler;
+
 pub trait Compiler<'a>: Sized {
     fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self>;
     fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self>;
