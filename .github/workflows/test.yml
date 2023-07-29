@@ -37,7 +37,6 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-            ~/.wasmtime
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
