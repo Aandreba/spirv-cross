@@ -2,11 +2,7 @@ use crate::{
     error::{Error, Result},
     sys,
 };
-use std::{
-    backtrace::Backtrace,
-    ffi::{c_void, CStr},
-    mem::MaybeUninit,
-};
+use std::{backtrace::Backtrace, ffi::CStr, mem::MaybeUninit};
 
 /// Manager of SPIRV-Cross resources
 pub struct Context {

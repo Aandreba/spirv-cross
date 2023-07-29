@@ -1,6 +1,5 @@
 use super::{Compiler, GenericCompiler};
-use crate::{error::Result, sys, Context};
-use docfg::docfg;
+use crate::{sys, Context, Result};
 use semver::Version;
 
 /// High Level Language compiler.

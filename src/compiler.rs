@@ -1,6 +1,6 @@
-use crate::error::Result;
 use crate::sys;
 use crate::Context;
+use crate::Result;
 use std::ffi::c_uint;
 use std::ffi::CStr;
 use std::mem::MaybeUninit;

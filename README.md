@@ -6,12 +6,12 @@ High and low level bindigns to the SPIRV-Cross API
 use spirv_cross::{
     bytes_to_words,
     compiler::{glsl::GlslCompiler, Compiler},
-    error::Result,
+    Result,
     Context,
 };
 
-pub fn main() -> Result<()> {
-    let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
+fn compile(bytes: &[u8]) -> Result<()> {
+    let words = bytes_to_words(bytes).unwrap();
 
     let mut context = Context::new()?;
     context.set_error_callback(|err| eprintln!("{}", err.to_string_lossy()));

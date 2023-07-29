@@ -1,7 +1,7 @@
 use super::{Compiler, GenericCompiler};
-use crate::error::Result;
 use crate::sys::{self, spvc_compiler_option};
 use crate::Context;
+use crate::Result;
 use semver::Version;
 
 /// OpenGL Shading Language compiler.
