@@ -50,7 +50,7 @@ jobs:
     
     - if: matrix.target == 'wasm32-wasi'
       name: Install Wasmtime
-      run: cargo install wasmtime-cli
+      run: if [ -z $(which wasmtime) ]; then cargo install wasmtime-cli; fi
 
     - if: matrix.target == 'wasm32-wasi'
       name: Install WASI runner
