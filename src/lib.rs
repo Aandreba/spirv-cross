@@ -14,22 +14,22 @@ macro_rules! flat_mod {
     };
 }
 
+/// Implementations for the various supported compilers.
 pub mod compiler;
-pub mod error;
 
-/// Raw bindings to the C
+/// Raw bindings to the C API.
 #[path = "bindings.rs"]
 pub mod sys;
 
 flat_mod! {
-    context
+    context,
+    error
 }
 
 #[doc(inline)]
 pub use compiler::Compiler;
-#[doc(inline)]
-pub use error::Error;
 
+/// Semantic version of the underlying SPIRV-Cross API
 pub const SPVC_VERSION: Version = Version::new(
     sys::SPVC_C_API_VERSION_MAJOR as u64,
     sys::SPVC_C_API_VERSION_MINOR as u64,
@@ -37,6 +37,9 @@ pub const SPVC_VERSION: Version = Version::new(
 );
 
 /// Converts a byte slice into a word slice, avoiding a new allocation if possible.
+///
+/// An allocation can be avoided if the provided `bytes` already have the same alignment as a `u32`.
+/// Otherwise, an aligned copy of the bytes must be made.
 ///
 /// Returns `None` if the amount of bytes doesn't result into a whole number of words.
 pub fn bytes_to_words(bytes: &[u8]) -> Option<Cow<'_, [u32]>> {

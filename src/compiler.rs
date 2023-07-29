@@ -15,9 +15,19 @@ pub use glsl::GlslCompiler;
 #[doc(inline)]
 pub use hlsl::HlslCompiler;
 
+/// A SPIRV-Cross compiler to an unkown target.
 pub trait Compiler<'a>: Sized {
+    /// Sets the compiler's `option` property to the specified integer value.
     fn set_uint(self, option: sys::spvc_compiler_option, value: c_uint) -> Result<Self>;
+
+    /// Sets the compiler's `option` property to the specified boolean value.
     fn set_bool(self, option: sys::spvc_compiler_option, value: bool) -> Result<Self>;
+
+    /// Compiles the program with the specified options, returning a reference to the context's
+    /// resulting C string.
+    ///
+    /// This method is usefull if you want to avoid extra allocations,
+    /// or intend to pass the result to another C function.
     fn raw_compile(self) -> Result<&'a CStr>;
 
     fn force_temporary(self, force_temporary: bool) -> Result<Self> {
@@ -78,12 +88,16 @@ pub trait Compiler<'a>: Sized {
         )
     }
 
+    /// Compiles the program with the specified options, returning a UTF-8 encoded copy of the result.
+    ///
+    /// This method makes use of `CStr::to_string_lossy`, so if the resulting source code returns invalid UTF-8, it will be replaced with the [`REPLACEMENT_CHARACTER`](std::char::REPLACEMENT_CHARACTER) (�).
     fn compile(self) -> Result<String> {
         let src = self.raw_compile()?;
         return Ok(src.to_string_lossy().into_owned());
     }
 }
 
+/// A SPIRV-Cross compiler to a manually specified target.
 pub struct GenericCompiler<'a> {
     pub compiler: sys::spvc_compiler,
     pub options: sys::spvc_compiler_options,
@@ -91,6 +105,7 @@ pub struct GenericCompiler<'a> {
 }
 
 impl<'a> GenericCompiler<'a> {
+    /// Creates a new [`GenericCompiler`]
     pub fn new(ctx: &'a mut Context, backend: sys::spvc_backend, words: &[u32]) -> Result<Self> {
         let mut parsed_ir = MaybeUninit::uninit();
         let mut compiler = MaybeUninit::uninit();
@@ -165,14 +180,6 @@ impl<'a> Compiler<'a> for GenericCompiler<'a> {
 
             return Ok(CStr::from_ptr(source.assume_init()));
         }
-    }
-
-    fn compile(self) -> Result<String>
-    where
-        Self: Sized,
-    {
-        let src = self.raw_compile()?;
-        return Ok(src.to_string_lossy().into_owned());
     }
 }
 

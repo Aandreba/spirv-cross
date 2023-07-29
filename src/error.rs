@@ -2,6 +2,7 @@ use crate::sys;
 use std::{error::Error as StdError, fmt::Display};
 pub type Result<T, E = Error> = ::std::result::Result<T, E>;
 
+/// A SPIRV-Cross API error, alongside it's error message.
 #[derive(Debug, Clone)]
 pub struct Error {
     pub code: sys::spvc_result,
