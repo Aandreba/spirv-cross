@@ -3,6 +3,7 @@ use crate::{error::Result, sys, Context};
 use docfg::docfg;
 use semver::Version;
 
+/// Metal Shading Language compiler.
 pub struct MslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }

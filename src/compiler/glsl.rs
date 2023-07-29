@@ -4,6 +4,7 @@ use crate::sys::{self, spvc_compiler_option};
 use crate::Context;
 use semver::Version;
 
+/// OpenGL Shading Language compiler.
 pub struct GlslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }

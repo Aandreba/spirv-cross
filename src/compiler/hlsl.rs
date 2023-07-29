@@ -3,6 +3,7 @@ use crate::{error::Result, sys, Context};
 use docfg::docfg;
 use semver::Version;
 
+/// High Level Language compiler.
 pub struct HlslCompiler<'a> {
     inner: GenericCompiler<'a>,
 }
