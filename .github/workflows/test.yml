@@ -17,10 +17,10 @@ jobs:
             runner: test
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            runner: test 
+            runner: test
           - target: x86_64-apple-darwin
             os: macos-latest
-            runner: test  
+            runner: test
           - target: wasm32-wasi
             os: ubuntu-latest
             runner: wasi test
@@ -47,7 +47,7 @@ jobs:
 
     - run: rustup override set nightly
     - run: rustup target add ${{ matrix.target }}
-    
+
     - if: matrix.target == 'wasm32-wasi'
       name: Install Wasmtime
       run: if [ -z $(which wasmtime) ]; then cargo install wasmtime-cli; fi
@@ -56,4 +56,4 @@ jobs:
       name: Install WASI runner
       run: if [ -z $(which cargo-wasi) ]; then cargo install cargo-wasi; fi
 
-    - run: cargo +nightly ${{ matrix.runner }} --all-features
+    - run: cargo +nightly ${{ matrix.runner }} --all --all-features

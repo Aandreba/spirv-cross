@@ -12,6 +12,7 @@ hlsl = ["glsl"]
 msl = ["glsl"]
 
 [dependencies]
+cfg-if = "1.0.0"
 docfg = "0.1.0"
 semver = "1.0.18"
 
