@@ -57,4 +57,4 @@ jobs:
       name: Install WASI runner
       run: cargo install cargo-wasi
 
-    - run: source ~/.bashrc && cargo +nightly ${{ matrix.runner }} --all-features
+    - run: cargo +nightly ${{ matrix.runner }} --all-features
