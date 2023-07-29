@@ -1,15 +1,9 @@
-use spirv_cross::{
-    bytes_to_words,
-    compiler::{glsl::GlslCompiler, Compiler},
-    error::Result,
-    Context,
-};
+use spirv_cross::{bytes_to_words, compiler::Compiler, error::Result, Context};
 
 #[cfg(feature = "glsl")]
 #[test]
 pub fn glsl() -> Result<()> {
-    use spirv_cross::compiler::glsl::EsOptions;
-
+    use spirv_cross::compiler::glsl::{EsOptions, GlslCompiler};
     let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
 
     let mut context = Context::new()?;
@@ -28,5 +22,15 @@ pub fn glsl() -> Result<()> {
 #[cfg(feature = "hlsl")]
 #[test]
 pub fn hlsl() -> Result<()> {
+    use spirv_cross::compiler::hlsl::HlslCompiler;
+    let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
+
+    let mut context = Context::new()?;
+    #[cfg(feature = "nightly")]
+    context.set_error_callback(|err| eprintln!("{}", err.to_string_lossy()));
+
+    let hlsl = HlslCompiler::new(&mut context, &words)?;
+    println!("{}", hlsl.compile()?);
+
     return Ok(());
 }

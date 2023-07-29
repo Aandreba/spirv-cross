@@ -12,10 +12,7 @@ pub struct GlslCompiler<'a> {
 
 #[docfg(feature = "glsl")]
 impl<'a> GlslCompiler<'a> {
-    pub fn new<'b>(ctx: &'a mut Context, words: &[u32]) -> Result<Self>
-    where
-        'a: 'b,
-    {
+    pub fn new(ctx: &'a mut Context, words: &[u32]) -> Result<Self> {
         return Ok(Self {
             inner: GenericCompiler::new(ctx, sys::spvc_backend::SPVC_BACKEND_GLSL, words)?,
         });

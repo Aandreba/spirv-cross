@@ -6,6 +6,7 @@ use std::ffi::CStr;
 use std::mem::MaybeUninit;
 
 pub mod glsl;
+pub mod hlsl;
 
 #[cfg(feature = "glsl")]
 #[doc(inline)]
@@ -29,10 +30,7 @@ pub struct GenericCompiler<'a> {
 }
 
 impl<'a> GenericCompiler<'a> {
-    pub fn new<'b>(ctx: &'a mut Context, backend: sys::spvc_backend, words: &[u32]) -> Result<Self>
-    where
-        'a: 'b,
-    {
+    pub fn new(ctx: &'a mut Context, backend: sys::spvc_backend, words: &[u32]) -> Result<Self> {
         let mut parsed_ir = MaybeUninit::uninit();
         let mut compiler = MaybeUninit::uninit();
         let mut options = MaybeUninit::uninit();

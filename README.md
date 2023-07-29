@@ -17,7 +17,6 @@ pub fn main() -> Result<()> {
     context.set_error_callback(|err| eprintln!("{}", err.to_string_lossy()));
 
     let compiler = GlslCompiler::new(&mut context, &words)?
-        .es(Some(EsOptions::default()))?
         .vulkan_semantics(true)?;
 
     println!("{}", compiler.compile()?);
