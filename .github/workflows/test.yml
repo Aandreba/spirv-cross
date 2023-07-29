@@ -47,7 +47,7 @@ jobs:
 
     - run: rustup target add ${{ matrix.target }}
     
-    - if: !steps.cache.outputs.cache-hit && matrix.target == 'wasm32-wasi'
+    - if: matrix.target == 'wasm32-wasi'
       name: Install Wasmtime
       run: (curl https://wasmtime.dev/install.sh -sSf | bash
 
