@@ -1,5 +1,5 @@
 [package]
-name = "spirv-cross"
+name = "spirvcross"
 description = "Bindings to SPIRV-Cross API"
 repository = "https://github.com/Aandreba/spirv-cross"
 license = "MIT"
