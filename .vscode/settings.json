@@ -3,5 +3,6 @@
         "exception": "cpp",
         "functional": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }

@@ -1,9 +1,9 @@
-use spirv_cross::{bytes_to_words, compiler::Compiler, Context, Result};
+use spirvcross::{bytes_to_words, compiler::Compiler, Context, Result};
 
 #[cfg(feature = "glsl")]
 #[test]
 pub fn glsl() -> Result<()> {
-    use spirv_cross::compiler::glsl::{EsOptions, GlslCompiler};
+    use spirvcross::compiler::glsl::{EsOptions, GlslCompiler};
     let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
 
     let mut context = Context::new()?;
@@ -22,7 +22,7 @@ pub fn glsl() -> Result<()> {
 #[cfg(feature = "hlsl")]
 #[test]
 pub fn hlsl() -> Result<()> {
-    use spirv_cross::compiler::hlsl::HlslCompiler;
+    use spirvcross::compiler::hlsl::HlslCompiler;
     let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
 
     let mut context = Context::new()?;
