@@ -38,7 +38,7 @@ pub fn hlsl() -> Result<()> {
 #[cfg(feature = "msl")]
 #[test]
 pub fn msl() -> Result<()> {
-    use spirv_cross::compiler::msl::MslCompiler;
+    use spirvcross::compiler::msl::MslCompiler;
     let words = bytes_to_words(include_bytes!("vertex.spv")).unwrap();
 
     let mut context = Context::new()?;
