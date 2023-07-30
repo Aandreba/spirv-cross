@@ -3,7 +3,7 @@ High and low level bindigns to the SPIRV-Cross API
 
 ## Example
 ```rust
-use spirv_cross::{
+use spirvcross::{
     bytes_to_words,
     compiler::{glsl::GlslCompiler, Compiler},
     Result,
