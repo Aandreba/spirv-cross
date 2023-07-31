@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
 
     let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")?;
     let sysroot = match target_arch.as_str() {
-        "wasm" => Some(wasi_sdk(&out_path).await?),
+        "wasm" | "wasm32" | "wasm64" => Some(wasi_sdk(&out_path).await?),
         _ => None,
     };
 
