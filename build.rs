@@ -12,9 +12,9 @@ use tar::Archive;
 async fn main() -> anyhow::Result<()> {
     let out_path = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS")?;
-    let sysroot = match target_os.as_str() {
-        "wasi" => Some(wasi_sdk(&out_path).await?),
+    let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")?;
+    let sysroot = match target_arch.as_str() {
+        "wasm" => Some(wasi_sdk(&out_path).await?),
         _ => None,
     };
 
