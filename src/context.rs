@@ -2,7 +2,7 @@ use crate::{
     error::{Error, Result},
     sys,
 };
-use std::{backtrace::Backtrace, ffi::CStr, mem::MaybeUninit, ops::Deref};
+use std::{ffi::CStr, mem::MaybeUninit, ops::Deref};
 
 /// Manager of SPIRV-Cross resources
 pub struct Context {
@@ -26,9 +26,6 @@ impl Context {
     }
 
     /// Sets a new callback function to be called whenever a context returns an error.
-    ///
-    /// If `nightly` is enabled, this function is optimized to a single memory allocation.
-    /// Otherwise, two memory allocations are used to store the callback.
     pub fn set_error_callback<F: 'static + FnMut(&CStr)>(&mut self, f: F) {
         unsafe extern "C" fn error_callback_wrapper<F: 'static + FnMut(&CStr)>(
             user_data: *mut std::ffi::c_void,
@@ -38,14 +35,14 @@ impl Context {
             (f)(CStr::from_ptr(error));
         }
 
-        let error_callback = Box::new(f);
+        let f = Box::<F>::new(f);
         unsafe {
             sys::spvc_context_set_error_callback(
                 self.inner,
                 Some(error_callback_wrapper::<F>),
-                error_callback.deref() as *const F as *mut std::ffi::c_void,
+                f.deref() as *const F as *mut std::ffi::c_void,
             );
-            self.error_callback = Some(f);
+            self.error_callback = Some(f as Box<dyn FnMut(&CStr)>);
         }
     }
 
@@ -64,7 +61,7 @@ impl Context {
         }
 
         #[cfg(debug_assertions)]
-        println!("{}", Backtrace::capture());
+        println!("{}", std::backtrace::Backtrace::capture());
 
         unsafe {
             let err_msg = CStr::from_ptr(sys::spvc_context_get_last_error_string(self.inner))
