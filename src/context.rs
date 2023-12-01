@@ -2,15 +2,12 @@ use crate::{
     error::{Error, Result},
     sys,
 };
-use std::{backtrace::Backtrace, ffi::CStr, mem::MaybeUninit};
+use std::{backtrace::Backtrace, ffi::CStr, mem::MaybeUninit, ops::Deref};
 
 /// Manager of SPIRV-Cross resources
 pub struct Context {
     pub inner: sys::spvc_context,
-    #[cfg(not(feature = "nightly"))]
-    error_callback: Option<Box<Box<dyn FnMut(&CStr)>>>,
-    #[cfg(feature = "nightly")]
-    error_callback: Option<std::boxed::ThinBox<dyn FnMut(&CStr)>>,
+    error_callback: Option<Box<dyn FnMut(&CStr)>>,
 }
 
 impl Context {
@@ -33,40 +30,20 @@ impl Context {
     /// If `nightly` is enabled, this function is optimized to a single memory allocation.
     /// Otherwise, two memory allocations are used to store the callback.
     pub fn set_error_callback<F: 'static + FnMut(&CStr)>(&mut self, f: F) {
-        unsafe extern "C" fn error_callback_wrapper(
+        unsafe extern "C" fn error_callback_wrapper<F: 'static + FnMut(&CStr)>(
             user_data: *mut std::ffi::c_void,
             error: *const std::ffi::c_char,
         ) {
-            cfg_if::cfg_if! {
-            if #[cfg(feature = "nightly")] {
-                let mut f = core::mem::ManuallyDrop::new(core::mem::transmute::<
-                    _,
-                    ThinBox<dyn FnMut(&CStr)>,
-                    >(user_data));
-                } else {
-                    let f = &mut *(user_data as *mut Box<dyn FnMut(&CStr)>);
-                }
-            }
-
+            let f = &mut *user_data.cast::<F>();
             (f)(CStr::from_ptr(error));
         }
 
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "nightly")] {
-                use std::boxed::ThinBox;
-                let f = ThinBox::<dyn FnMut(&CStr)>::new_unsize(f);
-                let user_data = unsafe { core::mem::transmute_copy(&f) };
-            } else {
-                let mut f = Box::new(Box::new(f) as Box<dyn FnMut(&CStr)>);
-                let user_data = (&mut f as &mut Box<dyn FnMut(&CStr)>) as *mut Box<dyn FnMut(&CStr)> as *mut std::ffi::c_void;
-            }
-        }
-
+        let error_callback = Box::new(f);
         unsafe {
             sys::spvc_context_set_error_callback(
                 self.inner,
-                Some(error_callback_wrapper),
-                user_data,
+                Some(error_callback_wrapper::<F>),
+                error_callback.deref() as *const F as *mut std::ffi::c_void,
             );
             self.error_callback = Some(f);
         }

@@ -73,7 +73,10 @@ fn build_library(wasi_sdk: Option<PathBuf>) -> anyhow::Result<()> {
     let out_path = out_path.join(build.get_profile());
 
     println!("cargo:rustc-link-search=native={}", out_path.display());
-    let ext = cfg!(windows).then_some("d").unwrap_or_default();
+    let ext = match cfg!(windows).then(|| build.get_profile()) {
+        Some("Debug") => "d",
+        _ => "",
+    };
 
     for entry in [
         "spirv-cross-c",
